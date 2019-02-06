@@ -76,17 +76,20 @@ Leaf subclass: Tree [
 
 "Create 1 tree for each ASCII char (256)"
 
-"Read in file (using bitstream obj?) and save frequency in new frequency table"
+"Read in file (using bitstream obj?) and save frequency in new frequency table (initialize w/ ASCII)"
+
+"order frequency table from lowest-highest freq?"
 
 "Create priority queue and load from frequency table"
 
 "Until 1 tree in the queue, 
 	pop two smallest from queue (T1, T2)
 	make new tree T3 with frequency = frq(T1) + frq(T2)
-	insert T3 into queue" 
+	insert T3 into queue (at the end or in order?)" 
 
-"Encoding of each char using DFS"
+"Encoding of each char using DFS, bit string (left is 0, right is 1)"
 
+"make encoding table?- char, freq, encoding string"
 "if -t, write out/print? encoding table sorted by character"
 "else write out encoding table using post-order traversal one bit at a time"
 
@@ -100,6 +103,6 @@ Leaf subclass: Tree [
 	push new tree of both of these children"
 	"continue until reaching last bit/stack is empty"
 	"loop over rest of input file to reconstruct"
-	"read bit until reaching leaf, write out corresponding byte & reset pointer back to 	    root"
+	"read bit until reaching leaf, write out corresponding byte & reset pointer back to root"
 	
 
