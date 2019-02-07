@@ -24,13 +24,19 @@ Object subclass: BitStream [
       myStream := fileStream.
       bitIndex := 1.
    ]
-   nextBit [
+
+"   nextBit [
       bitIndex = 1 ifTrue: [
          byte := myStream next.
          bitIndex := 9.
       ].
       bitIndex := bitIndex - 1.
       ^byte value bitAt: bitIndex
+   ]"
+	
+   nextBit [
+       byte := myStream next.
+       ^byte asciiValue
    ]
    atEnd [
       ^bitIndex = 1 and: [myStream atEnd]
@@ -42,15 +48,11 @@ Object subclass: BitStream [
 
 nl := Character nl.
 stdinBits := BitStream new: stdin.
-count := 0.
+
 [stdinBits atEnd] whileFalse: [
    stdout << stdinBits nextBit.
-   count := count + 1.
-   count = 4 ifTrue: [stdout << ' '].
-   count = 8 ifTrue: [
       stdout << ' ' << stdinBits currByte visible << nl.
-      count := 0
-   ].
+   
 ]
 
 "TEST: echo hello world | ./bitstream.st 2>&1"
