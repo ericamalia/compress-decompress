@@ -79,7 +79,7 @@ freqtable := Array new: 257[]
 "|i|
 i := 0
 0 to: 255: do: [freqtable at:i put:new Tree i 0]"
-freqtable at: 256 put: new Tree EOF 1
+freqtable at: 256 put: Tree new: EOF 1
 
 myStream := new: fileStream
 myStream fileIn: 'hello.in' !
@@ -88,18 +88,17 @@ myStream fileIn: 'hello.in' !
 	inputChar := myStream next.
 	ind := inputChar asciiValue
 	
-	[freqtable at: ind == 0] ifTrue [
-		freqtable at: ind put: new Tree inputChar 1
-	] ifFalse [
+	[freqtable at: ind == 0] ifTrue:[
+		freqtable at: ind put: Tree new: inputChar 1
+	] ifFalse:[
 		freqtable at: ind setChar: char: [count: + 1]
 	]
 	stdout << 'index is' << ind << 'count is' << freqtable at: ind count:
 ]
 "Read in file (using bitstream obj?) and save frequency in new frequency table (initialize w/ ASCII)"
 
-"order frequency table from lowest-highest freq?"
 
-"Create priority queue and load from frequency table"
+"Create priority queue and load from frequency table, if count > 0"
 priorQ := SortedCollection new
 priorQ sortBlock:[:a :b | a <=: b]
 
@@ -109,13 +108,17 @@ to:do: 0 to: 256 do: [
 	[freqtable at: i ~~ 0] ifTrue: [priorQ add: [freqtable at: i]
 ]
 
-
-"Until 1 tree in the queue, 
-	pop two smallest from queue (T1, T2)
-	make new tree T3 with frequency = frq(T1) + frq(T2)
-	insert T3 into queue (in order)" 
+"Huffman tree- result is tree in T3" 
+[priorQ isEmpty] whileFalse: [
+	| T1 T2 |
+	T1 := priorQ removeFirst.
+	T2 := priorQ removeFirst.
+	T3 := Tree new: T1 char count:(T1 count + T2 count) left:T1 right: T2.
+	priorQ add: T3.  
+]
 
 "Encoding of each char using DFS, bit string (left is 0, right is 1)"
+encodedArray := Array new: 257.
 
 "make encoding table?- char, freq, encoding string"
 "if -t, write out/print? encoding table sorted by character"
