@@ -69,29 +69,47 @@ Leaf subclass: Tree [
       left inorder: visitor prefix: string, '0'.
       right inorder: visitor prefix: string, '1'.
    ]
-
 ]
 
-"Frequency table array obj"
-freqtable := Array new: 257[] 
+quit := [:status| ObjectMemory quit: status ].
 
+openfile := [:filename :mode |
+    |file|
+    [
+        file := FileStream open: filename mode: mode
+    ] on: SystemExceptions.FileError do: [signal|
+        stderr << 'error'
+        quit value: 1.
+    ].
+    file.
+].
+
+infilename := Smalltalk arguments at: 1.
+outfilename := Smalltalk arguments at: 2.
+infile := openfile value: infilename value: FileStream read.
+outfile := openfile value: outfilename value: FileStream write.
+
+
+"Frequency table array obj"
+
+freqtable := Array new: 257.
 "Create 1 tree for each ASCII char (256)"
 "|i|
 i := 0
 0 to: 255: do: [freqtable at:i put:new Tree i 0]"
-freqtable at: 256 put: Tree new: EOF 1
 
-myStream := new: fileStream
-myStream fileIn: 'hello.in' !
-[myStream atEnd] whileFalse: [
+eof := Leaf new: 'EOF' count: 1.
+freqtable at: 256 put: 1.
+
+[infile atEnd] whileFalse: [
     	|inputChar ind|
-	inputChar := myStream next.
-	ind := inputChar asciiValue
+	inputChar := infile nextByte.
+	ind := inputChar asciiValue.
 	
 	[freqtable at: ind == 0] ifTrue:[
 		freqtable at: ind put: Leaf new: inputChar count: 1
 	] ifFalse:[
-		freqtable at: ind setChar: char: andCount: [count: + 1]
+		freqtable at: ind setChar: char: andCount: count: + 1
 	]
 	stdout << 'index is' << ind << 'count is' << freqtable at: ind count:
 ]
@@ -120,6 +138,10 @@ to:do: 0 to: 256 do: [
 "Encoding of each char using DFS, bit string (left is 0, right is 1)"
 encodedArray := Array new: 257.
 
+
+
+infile close.
+outfile close.
 "make encoding table?- char, freq, encoding string"
 "if -t, write out/print? encoding table sorted by character"
 "else write out encoding table using post-order traversal one bit at a time"
