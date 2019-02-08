@@ -89,9 +89,9 @@ myStream fileIn: 'hello.in' !
 	ind := inputChar asciiValue
 	
 	[freqtable at: ind == 0] ifTrue:[
-		freqtable at: ind put: Tree new: inputChar 1
+		freqtable at: ind put: Leaf new: inputChar count: 1
 	] ifFalse:[
-		freqtable at: ind setChar: char: [count: + 1]
+		freqtable at: ind setChar: char: andCount: [count: + 1]
 	]
 	stdout << 'index is' << ind << 'count is' << freqtable at: ind count:
 ]
