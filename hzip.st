@@ -101,23 +101,23 @@ i := 0
 eof := Leaf new: 'EOF' count: 1.
 freqtable at: 256 put: 1.
 
-[infile atEnd] whileFalse: [
+(infile atEnd) whileFalse:[
     	|inputChar ind|
 	inputChar := infile nextByte.
 	ind := inputChar asciiValue.
 	
-	[freqtable at: ind == 0] ifTrue:[
-		freqtable at: ind put: Leaf new: inputChar count: 1
+	(freqtable at: ind == 0) ifTrue:[
+		freqtable at: ind put: Leaf new: inputChar count: 1.
 	] ifFalse:[
-		freqtable at: ind setChar: char: andCount: count: + 1
+		(freqtable at: ind) setChar: char: andCount:(count: + 1).
 	]
-	stdout << 'index is' << ind << 'count is' << freqtable at: ind count:
+	stdout << 'index is' << ind << 'count is' << freqtable at: ind count:.
 ]
 "Read in file (using bitstream obj?) and save frequency in new frequency table (initialize w/ ASCII)"
 
 
 "Create priority queue and load from frequency table, if count > 0"
-priorQ := SortedCollection new
+priorQ := SortedCollection new.
 priorQ sortBlock:[:a :b | a <=: b]
 
 |i|
@@ -127,7 +127,7 @@ to:do: 0 to: 256 do: [
 ]
 
 "Huffman tree- result is tree in T3" 
-[priorQ isEmpty] whileFalse: [
+(priorQ isEmpty) whileFalse: [
 	| T1 T2 |
 	T1 := priorQ removeFirst.
 	T2 := priorQ removeFirst.
