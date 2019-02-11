@@ -39,7 +39,7 @@ Object subclass: Leaf [
       visitor value: char value: string.
    ]
 
-]
+].
 
 "Tree obj"
 Leaf subclass: Tree [
@@ -101,44 +101,48 @@ i := 0
 eof := Leaf new: 'EOF' count: 1.
 freqtable at: 256 put: 1.
 
-(infile atEnd) whileFalse:[
-    	|inputChar ind|
+[infile atEnd] whileFalse:[
+    	| inputChar ind |
 	inputChar := infile nextByte.
-	ind := inputChar asciiValue.
-	
+	ind := inputChar.
 	(freqtable at: ind == 0) ifTrue:[
 		freqtable at: ind put: Leaf new: inputChar count: 1.
 	] ifFalse:[
-		(freqtable at: ind) setChar: char: andCount:(count: + 1).
-	]
-	stdout << 'index is' << ind << 'count is' << freqtable at: ind count:.
-]
+		(freqtable at: ind) setChar: inputChar andCount: (freqtable at: ind count)+1.
+	].
+	stdout << 'index is' << ind << 'count is' << freqtable at: ind count.
+].
+
 "Read in file (using bitstream obj?) and save frequency in new frequency table (initialize w/ ASCII)"
 
 
 "Create priority queue and load from frequency table, if count > 0"
 priorQ := SortedCollection new.
-priorQ sortBlock:[:a :b | a <=: b]
+priorQ sortBlock:[:a :b | a <= b].
 
 |i|
 i := 0
-to:do: 0 to: 256 do: [
-	[freqtable at: i ~~ 0] ifTrue: [priorQ add: [freqtable at: i]
-]
+0 to: 256 do:[
+	(freqtable at: i ~= 0) ifTrue:[
+		priorQ add:(freqtable at: i). 
+	].
+].
 
 "Huffman tree- result is tree in T3" 
-(priorQ isEmpty) whileFalse: [
-	| T1 T2 |
+[priorQ isEmpty] whileFalse:[
+	| T1 T2 T3 |
 	T1 := priorQ removeFirst.
 	T2 := priorQ removeFirst.
-	T3 := Tree new: T1 char count:(T1 count + T2 count) left:T1 right: T2.
+	T3 := Tree new: T1 char count:(T1 count + T2 count) left: T1 right: T2.
 	priorQ add: T3.  
-]
+].
 
 "Encoding of each char using DFS, bit string (left is 0, right is 1)"
 encodedArray := Array new: 257.
-
-
+(T3 = nil) ifFalse: [
+	T3 inorder: [:char :bitstring| encodedArray at: char put: bitstring].
+].
+  "char has to be the character at the leaf of the bitstring"
 
 infile close.
 outfile close.
@@ -158,4 +162,3 @@ outfile close.
 	"loop over rest of input file to reconstruct"
 	"read bit until reaching leaf, write out corresponding byte & reset pointer back to root"
 	
-
