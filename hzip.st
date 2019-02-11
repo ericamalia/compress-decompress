@@ -94,9 +94,6 @@ outfile := openfile value: outfilename value: FileStream write.
 
 freqtable := Array new: 257.
 "Create 1 tree for each ASCII char (256)"
-"|i|
-i := 0
-0 to: 255: do: [freqtable at:i put:new Tree i 0]"
 
 eof := Leaf new: 'EOF' count: 1.
 freqtable at: 256 put: 1.
@@ -120,10 +117,10 @@ freqtable at: 256 put: 1.
 priorQ := SortedCollection new.
 priorQ sortBlock:[:a :b | a <= b].
 
-|i|
-i := 0
-0 to: 256 do:[
-	(freqtable at: i ~= 0) ifTrue:[
+"|i|
+i := 0."
+0 to: 256 do: [:i |
+	(freqtable at: i ~~ 0) ifTrue:[
 		priorQ add:(freqtable at: i). 
 	].
 ].
