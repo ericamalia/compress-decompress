@@ -84,6 +84,8 @@ openfile := [:filename :mode |
     file.
 ].
 
+freqtable := Array new: 257.
+
 infilename := Smalltalk arguments at: 1.
 outfilename := Smalltalk arguments at: 2.
 infile := openfile value: infilename value: FileStream read.
@@ -92,22 +94,17 @@ outfile := openfile value: outfilename value: FileStream write.
 
 "Frequency table array obj"
 
-freqtable := Array new: 257.
 "Create 1 tree for each ASCII char (256)"
-
-eof := Leaf new: 'EOF' count: 1.
-freqtable at: 256 put: 1.
-
+"| eof |
+eof := Leaf new: 'e' count: 1
+freqtable at: 256 put: eof
+"
 [infile atEnd] whileFalse:[
     	| inputChar ind |
-	inputChar := infile nextByte.
-	ind := inputChar.
-	(freqtable at: ind == 0) ifTrue:[
-		freqtable at: ind put: Leaf new: inputChar count: 1.
-	] ifFalse:[
-		(freqtable at: ind) setChar: inputChar andCount: (freqtable at: ind count)+1.
-	].
-	stdout << 'index is' << ind << 'count is' << freqtable at: ind count.
+	ind := infile nextByte.
+	(freqtable at: ind) isNil 
+	    ifTrue: [freqtable at: ind put: 0].
+	freqtable at: ind put: (freqtable at: ind) + 1.
 ].
 
 "Read in file (using bitstream obj?) and save frequency in new frequency table (initialize w/ ASCII)"
@@ -115,13 +112,13 @@ freqtable at: 256 put: 1.
 
 "Create priority queue and load from frequency table, if count > 0"
 priorQ := SortedCollection new.
-priorQ sortBlock:[:a :b | a <= b].
 
 "|i|
 i := 0."
-0 to: 256 do: [:i |
-	(freqtable at: i ~~ 0) ifTrue:[
-		priorQ add:(freqtable at: i). 
+1 to: 257 do: [:i |
+	((freqtable at: i) ~= 0) ifTrue:[
+		char := i asCharacter.
+		priorQ add: (Leaf new: char count: (freqtable at: i)). 
 	].
 ].
 
@@ -135,7 +132,7 @@ i := 0."
 ].
 
 "Encoding of each char using DFS, bit string (left is 0, right is 1)"
-encodedArray := Array new: 257.
+encodedArray := Array new: 257
 (T3 = nil) ifFalse: [
 	T3 inorder: [:char :bitstring| encodedArray at: char put: bitstring].
 ].
