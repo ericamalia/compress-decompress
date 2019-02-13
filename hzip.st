@@ -1,5 +1,17 @@
 #!/afs/cats.ucsc.edu/courses/cmps112-wm/usr/smalltalk/bin/gst -f
 
+nl := Character nl.
+
+Character extend [
+   isPrint [
+      ^ (Character space <= self) & (self <= $~)
+   ]
+   visible [
+      self isPrint ifTrue: [^ '$', self asString]
+                   ifFalse: [^ self asInteger printStringRadix: 8]
+   ]
+]
+
 "Leaf obj"
 Object subclass: Leaf [
    |char count|
@@ -39,7 +51,7 @@ Object subclass: Leaf [
       visitor value: char value: string.
    ]
 
-].
+]
 
 "Tree obj"
 Leaf subclass: Tree [
@@ -116,31 +128,37 @@ priorQ := SortedCollection new.
 "|i|
 i := 0."
 1 to: 257 do: [:i |
-	((freqtable at: i) ~= 0) ifTrue:[
+	((freqtable at: i) notNil) ifTrue:[
+		stdout << 'freqtable at i:' << (freqtable at: i).
 		char := i asCharacter.
 		priorQ add: (Leaf new: char count: (freqtable at: i)). 
 	].
 ].
 
 "Huffman tree- result is tree in T3" 
-[priorQ isEmpty] whileFalse:[
+[priorQ size == 1] whileFalse:[
 	| T1 T2 T3 |
 	T1 := priorQ removeFirst.
 	T2 := priorQ removeFirst.
-	T3 := Tree new: T1 char count:(T1 count + T2 count) left: T1 right: T2.
+	T3 := (Tree new: T1 char count: (T1 count + T2 count) left: T1 right: T2).
 	priorQ add: T3.  
 ].
 
+root := priorQ removeFirst.
+
 "Encoding of each char using DFS, bit string (left is 0, right is 1)"
-encodedArray := Array new: 257
-(T3 = nil) ifFalse: [
-	T3 inorder: [:char :bitstring| encodedArray at: char put: bitstring].
+encodedArray := Array new: 257.
+(root = nil) ifFalse: [
+	root inorder: [:char :bitstring| encodedArray at: (char asInteger) put: bitstring] prefix: ''.
+	1 to: 257 do: [:i |
+        	((freqtable at: i) notNil) ifTrue:[ stdout << 'encodedArray at' << (i asCharacter) << ':' << (encodedArray at: i) << nl.]
+		.]
+	"root inorder: [:char :string| stdout << '[' << char << ']=' << string << nl.] prefix: ''."
 ].
-  "char has to be the character at the leaf of the bitstring"
 
 infile close.
 outfile close.
-"make encoding table?- char, freq, encoding string"
+
 "if -t, write out/print? encoding table sorted by character"
 "else write out encoding table using post-order traversal one bit at a time"
 
