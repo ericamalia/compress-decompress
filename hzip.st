@@ -1,7 +1,7 @@
 #!/afs/cats.ucsc.edu/courses/cmps112-wm/usr/smalltalk/bin/gst -f
 
 nl := Character nl.
-
+outfileExists := false.
 Character extend [
    isPrint [
       ^ (Character space <= self) & (self <= $~)
@@ -98,19 +98,21 @@ openfile := [:filename :mode |
 
 freqtable := Array new: 257.
 
-infilename := Smalltalk arguments at: 1.
-outfilename := Smalltalk arguments at: 2.
+options := Smalltalk arguments at: 1.
+infilename := Smalltalk arguments at: 2.
+(Smalltalk arguments size < 3) ifFalse: [
+	outfilename := Smalltalk arguments at: 3.
+	outfile := openfile value: outfilename value: FileStream write.
+	outfileExists := true.
+].
 infile := openfile value: infilename value: FileStream read.
-outfile := openfile value: outfilename value: FileStream write.
-
 
 "Frequency table array obj"
 
 "Create 1 tree for each ASCII char (256)"
-"| eof |
-eof := Leaf new: 'e' count: 1
-freqtable at: 256 put: eof
-"
+
+freqtable at: 257 put: 1.
+
 [infile atEnd] whileFalse:[
     	| inputChar ind |
 	ind := infile nextByte.
@@ -157,7 +159,7 @@ encodedArray := Array new: 257.
 ].
 
 infile close.
-outfile close.
+(outfileExists) ifTrue: [outfile close].
 
 "if -t, write out/print? encoding table sorted by character"
 "else write out encoding table using post-order traversal one bit at a time"
