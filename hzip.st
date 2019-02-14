@@ -80,6 +80,13 @@ Leaf subclass: Tree [
    inorder: visitor prefix: string [
       left inorder: visitor prefix: string, '0'.
       right inorder: visitor prefix: string, '1'.
+
+   ]
+
+   postorder: visitor prefix: string [
+	"traverse left print 0 then char"
+	"traverse right print 0 then chat"
+	"print 1"
    ]
 ]
 
@@ -98,7 +105,7 @@ openfile := [:filename :mode |
 
 freqtable := Array new: 257.
 
-options := Smalltalk arguments at: 1.
+option := Smalltalk arguments at: 1.
 infilename := Smalltalk arguments at: 2.
 (Smalltalk arguments size < 3) ifFalse: [
 	outfilename := Smalltalk arguments at: 3.
@@ -131,7 +138,7 @@ priorQ := SortedCollection new.
 i := 0."
 1 to: 257 do: [:i |
 	((freqtable at: i) notNil) ifTrue:[
-		stdout << 'freqtable at i:' << (freqtable at: i).
+		stdout << 'freqtable at i:' << (freqtable at: i) << nl.
 		char := i asCharacter.
 		priorQ add: (Leaf new: char count: (freqtable at: i)). 
 	].
@@ -153,9 +160,92 @@ encodedArray := Array new: 257.
 (root = nil) ifFalse: [
 	root inorder: [:char :bitstring| encodedArray at: (char asInteger) put: bitstring] prefix: ''.
 	1 to: 257 do: [:i |
-        	((freqtable at: i) notNil) ifTrue:[ stdout << 'encodedArray at' << (i asCharacter) << ':' << (encodedArray at: i) << nl.]
-		.]
+        	((freqtable at: i) notNil) ifTrue:[ 
+			stdout << 'encodedArray at' << (i asCharacter) << ':' << (encodedArray at: i) << nl.
+		]
+	]
 	"root inorder: [:char :string| stdout << '[' << char << ']=' << string << nl.] prefix: ''."
+].
+
+
+
+stdout << (40 radix: 16) << nl.	
+(option = '-t') ifTrue: [
+	1 to: 256 do: [:i |
+		(freqtable at: i) notNil ifTrue: [	
+			(outfileExists) ifTrue: [
+				(i < 33) ifTrue: [
+					|hex|
+					outfile nextPut: $x.
+					hex := i radix: 16.
+					(hex size < 5) ifTrue: [
+						outfile nextPut: $0.
+					].
+					4 to: hex size do: [:j |
+						outfile nextPut: (hex at: j).
+					].
+				] ifFalse: [
+					outfile nextPut: $ .
+					outfile nextPut: (i asCharacter).	
+					outfile nextPut: $ .
+				].
+				
+				1 to: (5 - (((freqtable at: i) asString) size)) do: [:variable |
+					outfile nextPut: $ .
+				].
+				1 to: (((freqtable at: i) asString) size) do: [:j |
+					outfile nextPut: (((freqtable at: i) asString) at: j).
+				].
+				outfile nextPut: $ .
+				
+
+				1 to: ((encodedArray at: i) size) do: [:j |
+					|charr|
+					charr := ((encodedArray at: i) at: j).
+					outfile nextPut: charr.
+				].
+
+				outfile nextPut: nl.
+			] ifFalse: [	
+				(i < 33) ifTrue: [
+					|hex|
+					stdout << 'x'.
+					hex := i radix: 16.
+					(hex size < 5) ifTrue: [
+						stdout << '0'.
+					].
+					4 to: hex size do: [:j |
+						stdout << (hex at: j).
+					].
+				] ifFalse: [
+					stdout << ' ' .
+					stdout << (i asCharacter).	
+					stdout << ' ' .
+				].
+				
+				1 to: (5 - (((freqtable at: i) asString) size)) do: [:variable |
+					stdout << ' ' .
+				].
+				1 to: (((freqtable at: i) asString) size) do: [:j |
+					stdout << (((freqtable at: i) asString) at: j).
+				].
+				stdout << ' ' .
+				
+
+				1 to: ((encodedArray at: i) size) do: [:j |
+					|charr|
+					charr := ((encodedArray at: i) at: j).
+					stdout << charr.
+				].
+
+				stdout << nl.
+				
+			].
+		].
+	].
+] ifFalse: [
+	
+
 ].
 
 infile close.
