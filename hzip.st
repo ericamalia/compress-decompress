@@ -50,7 +50,10 @@ Object subclass: Leaf [
    inorder: visitor prefix: string [
       visitor value: char value: string.
    ]
-
+   
+   postorder: visitor prefix: string [
+      visitor value: char value: string.
+   ]
 ]
 
 "Tree obj"
@@ -79,14 +82,12 @@ Leaf subclass: Tree [
 
    inorder: visitor prefix: string [
       left inorder: visitor prefix: string, '0'.
-      right inorder: visitor prefix: string, '1'.
-
+	right inorder: visitor prefix: string, '1'.
    ]
 
-   postorder: visitor prefix: string [
-	"traverse left print 0 then char"
-	"traverse right print 0 then chat"
-	"print 1"
+   postorder: visitor prefix: string [	
+	left postorder: visitor prefix: string.
+	right postorder: visitor prefix: string.
    ]
 ]
 
@@ -169,7 +170,6 @@ encodedArray := Array new: 257.
 
 
 
-stdout << (40 radix: 16) << nl.	
 (option = '-t') ifTrue: [
 	1 to: 256 do: [:i |
 		(freqtable at: i) notNil ifTrue: [	
@@ -244,9 +244,13 @@ stdout << (40 radix: 16) << nl.
 		].
 	].
 ] ifFalse: [
-	
-
+	(outfileExists) ifTrue: [
+		root postorder: [:char :bitstring| stdout <<'0'<< char << ((char asInteger) radix: 2) <<  '--1' << nl.] prefix: ''.
+	].
 ].
+
+
+
 
 infile close.
 (outfileExists) ifTrue: [outfile close].
