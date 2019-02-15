@@ -128,7 +128,7 @@ freqtable at: 257 put: 1.
 	freqtable at: ind put: (freqtable at: ind) + 1.
 ].
 
-"Read in file (using bitstream obj?) and save frequency in new frequency table (initialize w/ ASCII)"
+"Read in file and save frequency in new frequency table (initialize w/ ASCII)"
 
 
 "Create priority queue and load from frequency table, if count > 0"
@@ -247,15 +247,61 @@ stdout << (40 radix: 16) << nl.
 	
 
 ].
-
 infile close.
-(outfileExists) ifTrue: [outfile close].
+
 
 "if -t, write out/print? encoding table sorted by character"
 "else write out encoding table using post-order traversal one bit at a time"
 
-"compress input file (write out encoded version of each byte) -> output file"
+infile := openfile value: infilename value: FileStream read.
 
+"compress input file (write out encoded version of each byte) -> output file"
+(option = '-c') ifTrue: [
+	(outfileExists) ifTrue: [
+		[infile atEnd] whileFalse:[
+        		| ind numZeros |
+        		ind := infile nextByte.
+			numZeros := (8 - ((encodedArray at:ind) size)).
+			1 to: numZeros do:[:i| outfile nextPut:$0.].	
+			1 to: ((encodedArray at: ind) size) do: [:j |
+                                       |charr|
+                                       charr := ((encodedArray at: ind) at: j).
+                                       outfile nextPut: charr.
+                               ].
+		].
+		
+                1 to: (8 - ((encodedArray at:257) size)) do:[:i| outfile nextPut: $0.].
+		1 to: ((encodedArray at: 257) size) do: [:j |
+                             |charr|
+                             charr := ((encodedArray at: 257) at: j).
+                             outfile nextPut: charr.
+                ].
+
+	]ifFalse:[
+		[infile atEnd] whileFalse:[
+                        | ind numZeros |
+                        ind := infile nextByte.
+                        numZeros := (8 - ((encodedArray at:ind) size)).
+                        1 to: numZeros do:[:i| stdout << '0'.].
+                        1 to: ((encodedArray at: ind) size) do: [:j |
+                                       |charr|
+                                       charr := ((encodedArray at: ind) at: j).
+                                       stdout<< charr.
+                               ].
+                ].
+			
+                1 to:(8 - ((encodedArray at:257) size))do:[:i| stdout << '0'.].
+
+		1 to: ((encodedArray at: 257) size) do: [:j |
+                             |charr|
+                             charr := ((encodedArray at: 257) at: j).
+                             stdout<< charr.
+                ].
+	].
+].
+
+infile close. 
+(outfileExists) ifTrue: [outfile close].
 
 "decompress input file -> output"
 	"reconstruct huffman decoding tree, read 1 bit"
