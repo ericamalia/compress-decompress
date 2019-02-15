@@ -51,8 +51,15 @@ Object subclass: Leaf [
       visitor value: char value: string.
    ]
    
-   postorder: visitor prefix: string [
-      visitor value: char value: string.
+   postorder: visitor[
+	
+	"(outfileExists) ifTrue:[
+		outfile nextPut: $0.
+		outfile nextPut: char. 
+	]ifFalse:["
+     	 	stdout << '0' << char. " ]."
+	"print char in bits"
+	
    ]
 ]
 
@@ -81,13 +88,21 @@ Leaf subclass: Tree [
    ]
 
    inorder: visitor prefix: string [
-      left inorder: visitor prefix: string, '0'.
+	left inorder: visitor prefix: string, '0'.
 	right inorder: visitor prefix: string, '1'.
    ]
 
-   postorder: visitor prefix: string [	
-	left postorder: visitor prefix: string.
-	right postorder: visitor prefix: string.
+   postorder: visitor[	
+	left postorder: visitor.
+	right postorder: visitor.
+
+	"(outfileExists) ifTrue:[
+		outfile nextPut: $1. 
+	]ifFalse:["
+		stdout << '1'." ]."
+	"traverse tree keeping track of visitor"
+	"visitor is either a leaf(use visitor in leaf class?)
+	 or internal node, so we check and if leaf print the char if interior print 1"
    ]
 ]
 
@@ -103,9 +118,10 @@ openfile := [:filename :mode |
     ].
     file.
 ].
-
+"initialize freqtable"
 freqtable := Array new: 257.
 
+"get infile and optional outfile"
 option := Smalltalk arguments at: 1.
 infilename := Smalltalk arguments at: 2.
 (Smalltalk arguments size < 3) ifFalse: [
@@ -169,7 +185,7 @@ encodedArray := Array new: 257.
 ].
 
 
-
+"if option t, print encoding table sorted by character to output file if exists or stdout"
 (option = '-t') ifTrue: [
 	1 to: 256 do: [:i |
 		(freqtable at: i) notNil ifTrue: [	
@@ -244,16 +260,11 @@ encodedArray := Array new: 257.
 		].
 	].
 ] ifFalse: [
-	(outfileExists) ifTrue: [
-		root postorder: [:char :bitstring| stdout <<'0'<< char << ((char asInteger) radix: 2) <<  '--1' << nl.] prefix: ''.
-	].
+	root postorder: [].
 ].
 infile close.
 
-
-"if -t, write out/print? encoding table sorted by character"
-"else write out encoding table using post-order traversal one bit at a time"
-
+"reopen input file"
 infile := openfile value: infilename value: FileStream read.
 
 "compress input file (write out encoded version of each byte) -> output file"
