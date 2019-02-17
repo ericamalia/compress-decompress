@@ -52,14 +52,16 @@ Object subclass: Leaf [
    ]
    
    postorder: visitor[
-	
-	"(outfileExists) ifTrue:[
-		outfile nextPut: $0.
-		outfile nextPut: char. 
-	]ifFalse:["
-     	 	stdout << '0' << char. " ]."
+	stdout << '0' << char.
 	"print char in bits"
 	
+   ]
+
+   
+   postorder: visitor file: outfile[	
+	outfile nextPut: $0.
+	stdout << char << '~~'. 
+   	"outfile nextPut: char."
    ]
 ]
 
@@ -96,14 +98,21 @@ Leaf subclass: Tree [
 	left postorder: visitor.
 	right postorder: visitor.
 
-	"(outfileExists) ifTrue:[
+"	(outfileExists) ifTrue:[
 		outfile nextPut: $1. 
-	]ifFalse:["
-		stdout << '1'." ]."
+	]ifFalse:[
+"		stdout << '1'."]."
 	"traverse tree keeping track of visitor"
 	"visitor is either a leaf(use visitor in leaf class?)
 	 or internal node, so we check and if leaf print the char if interior print 1"
    ]
+
+   
+   postorder: visitor file: outfile[	
+	left postorder: visitor file: outfile.
+	right postorder: visitor file: outfile.
+	outfile nextPut: $1. 
+	]
 ]
 
 quit := [:status| ObjectMemory quit: status ].
@@ -136,7 +145,6 @@ infile := openfile value: infilename value: FileStream read.
 "Create 1 tree for each ASCII char (256)"
 
 freqtable at: 257 put: 1.
-
 [infile atEnd] whileFalse:[
     	| inputChar ind |
 	ind := infile nextByte.
@@ -181,9 +189,7 @@ encodedArray := Array new: 257.
 			stdout << 'encodedArray at' << (i asCharacter) << ':' << (encodedArray at: i) << nl.
 		]
 	]
-	"root inorder: [:char :string| stdout << '[' << char << ']=' << string << nl.] prefix: ''."
 ].
-
 
 "if option t, print encoding table sorted by character to output file if exists or stdout"
 (option = '-t') ifTrue: [
@@ -260,7 +266,11 @@ encodedArray := Array new: 257.
 		].
 	].
 ] ifFalse: [
-	root postorder: [].
+	(outfileExists) ifTrue: [
+		root postorder: [] file: outfile.
+	] ifFalse: [
+		root postorder: [].
+	]
 ].
 infile close.
 
