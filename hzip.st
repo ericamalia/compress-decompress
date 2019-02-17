@@ -60,8 +60,9 @@ Object subclass: Leaf [
    
    postorder: visitor file: outfile[	
 	outfile nextPut: $0.
-	stdout << char << '~~'. 
-   	"outfile nextPut: char."
+	"stdout << char << '~~'."
+   	(char == 0) ifTrue: [stdout << 'char is 0'.]
+		    ifFalse:[outfile nextPut: (char asCharacter).].
    ]
 ]
 
@@ -97,11 +98,8 @@ Leaf subclass: Tree [
    postorder: visitor[	
 	left postorder: visitor.
 	right postorder: visitor.
-
-"	(outfileExists) ifTrue:[
-		outfile nextPut: $1. 
-	]ifFalse:[
-"		stdout << '1'."]."
+	
+	stdout << '1'.
 	"traverse tree keeping track of visitor"
 	"visitor is either a leaf(use visitor in leaf class?)
 	 or internal node, so we check and if leaf print the char if interior print 1"
@@ -145,6 +143,7 @@ infile := openfile value: infilename value: FileStream read.
 "Create 1 tree for each ASCII char (256)"
 
 freqtable at: 257 put: 1.
+
 [infile atEnd] whileFalse:[
     	| inputChar ind |
 	ind := infile nextByte.
