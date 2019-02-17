@@ -332,4 +332,5 @@ infile close.
 	"continue until reaching last bit/stack is empty"
 	"loop over rest of input file to reconstruct"
 	"read bit until reaching leaf, write out corresponding byte & reset pointer back to root"
-	
+(option = '-d') ifTrue: [
+	].	
