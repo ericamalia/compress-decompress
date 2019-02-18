@@ -152,8 +152,22 @@ infile := openfile value: infilename value: FileStream read.
 
 
 (option = '-u') ifTrue: [
-	| bit |
+	| bit byte nextBit|
 	bit := infile next.
+	byte := 0.
+	(bit = 0) ifTrue: [
+		0 to: 7 do: [:i|
+			nextBit := infile next.
+			nextBit := nextBit bitShift: i.
+			byte := byte bitOr: nextBit.
+			].
+		"unimpl eof check here"
+		"push byte onto stack?"
+		] ifFalse: [
+			
+
+		].	
+
 	stdout << bit << nl.
 ].
 
