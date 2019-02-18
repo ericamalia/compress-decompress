@@ -52,17 +52,22 @@ Object subclass: Leaf [
    ]
    
    postorder: visitor[
-	stdout << '0' << char.
+	stdout << '0'.
+	1 to: (char size) do:[:i|
+		stdout << (char at: i).].
 	"print char in bits"
 	
    ]
-
-   
+  
    postorder: visitor file: outfile[	
 	outfile nextPut: $0.
 	"stdout << char << '~~'."
-   	(char == 0) ifTrue: [stdout << 'char is 0'.]
-		    ifFalse:[outfile nextPut: (char asCharacter).].
+	(char = (257 asCharacter)) ifTrue:[stdout << 'char is eof'.]
+		    ifFalse:[
+			1 to: (char size) do:[:i|
+				(outfile nextPut: (char at: i))
+			]
+		].
    ]
 ]
 
@@ -207,7 +212,8 @@ encodedArray := Array new: 257.
 					].
 				] ifFalse: [
 					outfile nextPut: $ .
-					outfile nextPut: (i asCharacter).	
+					(i = 257 asCharacter) ifTrue: [outfile nextPut: ('EOF')]
+					ifFalse:[outfile nextPut: (i asCharacter).].	
 					outfile nextPut: $ .
 				].
 				
