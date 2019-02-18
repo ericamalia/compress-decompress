@@ -62,12 +62,19 @@ Object subclass: Leaf [
    postorder: visitor file: outfile[	
 	outfile nextPut: $0.
 	"stdout << char << '~~'."
-	(char = (257 asCharacter)) ifTrue:[stdout << 'char is eof'.]
-		    ifFalse:[
-			1 to: (char size) do:[:i|
-				(outfile nextPut: (char at: i))
-			]
-		].
+	
+	"need to add a special case for if char is 0"
+	(char = (257 asCharacter)) ifTrue:[
+		stdout << 'putting 256 as binary in outfile' << Character nl.
+		outfile nextPut: $1.
+		1 to: 8 do: [:i|
+			outfile nextPut: $0.
+		]
+	 ]ifFalse:[
+		1 to: (char size) do:[:i|
+			(outfile nextPut: (char at: i))
+		]
+	].
    ]
 ]
 
@@ -142,6 +149,13 @@ infilename := Smalltalk arguments at: 2.
 	outfileExists := true.
 ].
 infile := openfile value: infilename value: FileStream read.
+
+
+(option = '-u') ifTrue: [
+	| bit |
+	bit := infile next.
+	stdout << bit << nl.
+].
 
 "Frequency table array obj"
 
