@@ -1,13 +1,2 @@
-Object: nil error: did not understand #|
-SystemExceptions.FileError(Exception)>>signal (ExcHandling.st:254)
-SystemExceptions.FileError class(Exception class)>>signal: (ExcHandling.st:161)
-[] in FileStream class(FileDescriptor class)>>open:mode: (FileDescr.st:112)
-[] in FileStream class(FileDescriptor class)>>fopen:mode:ifFail: (FileDescr.st:192)
-FileStream(FileDescriptor)>>fileOp:with:with:ifFail: (FileDescr.st:901)
-FileStream class(FileDescriptor class)>>fopen:mode:ifFail: (FileDescr.st:191)
-FileStream class(FileDescriptor class)>>open:mode:ifFail: (FileDescr.st:137)
-FileStream class(FileDescriptor class)>>open:mode: (FileDescr.st:111)
-optimized [] in UndefinedObject>>executeStatements (hzip.st:79)
-BlockClosure>>on:do: (BlkClosure.st:193)
-optimized [] in UndefinedObject>>executeStatements (hzip.st:80)
-UndefinedObject>>executeStatements (hzip.st:89)
+freqtable at i:1
+encodedArray at<16r0101>:
