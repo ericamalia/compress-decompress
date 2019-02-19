@@ -52,28 +52,63 @@ Object subclass: Leaf [
    ]
    
    postorder: visitor[
+	| ascii |
 	stdout << '0'.
-	1 to: (char size) do:[:i|
-		stdout << (char at: i).].
-	"print char in bits"
 	
+	(char = (0 asCharacter)) ifTrue: [
+		stdout << '0'.
+		1 to: 8 do: [:i|
+			stdout << '0'.
+		].
+	].
+
+	(char = (257 asCharacter)) ifTrue:[
+		1 to: 8 do: [:i|
+			stdout << '0'.
+		].
+		stdout << '1'.
+	] ifFalse: [
+	
+
+		ascii := ((char asciiValue) radix: 2).
+		1 to: (10 - (ascii size)) do: [:i |
+			stdout << '0'.
+		].
+		3 to: (ascii size) do:[:i|
+			stdout << (ascii at: i).
+		].	
+		"print char in bits"
+		].
    ]
   
    postorder: visitor file: outfile[	
+	|ascii|
 	outfile nextPut: $0.
 	"stdout << char << '~~'."
 	
 	"need to add a special case for if char is 0"
-	(char = (257 asCharacter)) ifTrue:[
-		stdout << 'putting 256 as binary in outfile' << Character nl.
-		outfile nextPut: $1.
+
+	(char = (0 asCharacter)) ifTrue: [
+		outfile nextPut: $0.
 		1 to: 8 do: [:i|
 			outfile nextPut: $0.
-		]
+		].
+	].
+
+	(char = (257 asCharacter)) ifTrue:[
+		stdout << 'putting 256 as binary in outfile' << Character nl.
+		1 to: 8 do: [:i|
+			outfile nextPut: $0.
+		].
+		outfile nextPut: $1.
 	 ]ifFalse:[
-		1 to: (char size) do:[:i|
-			(outfile nextPut: (char at: i))
-		]
+		ascii := ((char asciiValue) radix: 2).
+		1 to: (10 - (ascii size)) do: [:i |
+			outfile nextPut: $0.
+		].
+		3 to: (ascii size) do:[:i|
+			outfile nextPut: (ascii at: i).
+		].	
 	].
    ]
 ]
@@ -81,7 +116,8 @@ Object subclass: Leaf [
 "Tree obj"
 Leaf subclass: Tree [
    |left right|
-
+   left [ ^ left]
+   right [ ^ right]
    Tree class >> new: aChar count: aCount [
       self shouldNotImplement
    ]
@@ -152,24 +188,56 @@ infile := openfile value: infilename value: FileStream read.
 
 
 (option = '-u') ifTrue: [
-	| bit byte nextBit|
-	bit := infile next.
-	byte := 0.
-	(bit = 0) ifTrue: [
-		0 to: 7 do: [:i|
-			nextBit := infile next.
-			nextBit := nextBit bitShift: i.
-			byte := byte bitOr: nextBit.
+	|endOfHuffman stack bit byte nextBit aLeaf root2 leftTree rightTree newTree|
+	stack := OrderedCollection new.
+	endOfHuffman := false.
+	[endOfHuffman] whileFalse: [
+		bit := infile next.
+		byte := 16r00.
+		(bit = $0) ifTrue: [
+			0 to: 7 do: [:i|
+			nextBit := ((infile next) asInteger) - 48.
+				nextBit := nextBit bitShift: (7-i).
+				byte := byte bitOr: nextBit.
+				].
+			stdout << 'byte is: ' << byte << nl.
+			(byte = 0) ifTrue: [
+				| extraBit|
+				extraBit := infile next.
+				(extraBit = $1) ifTrue: [
+					byte := byte + 256.
+				].
 			].
-		"unimpl eof check here"
-		"push byte onto stack?"
+			aLeaf := Leaf new: (byte asCharacter) count: 1.
+			stack add: aLeaf.
 		] ifFalse: [
+			((stack size) = 1) ifFalse: [
+				rightTree := stack removeLast.
+				leftTree := stack removeLast.
+				newTree := Tree new: (leftTree char) count: 1 left: leftTree right: rightTree.
+				stack add: newTree. 
+			] ifTrue: [
+				root2 := newTree.
+				endOfHuffman := true.
+			].
 			
-
 		].	
-
-	stdout << bit << nl.
-].
+	].
+	[infile atEnd] whileFalse: [
+		| currNode bit |
+		currNode := root2.
+		[(currNode isMemberOf: Leaf)] whileFalse: [
+			bit := infile next.
+			(bit = $0) ifTrue: [
+				currNode := (currNode left).
+			] ifFalse: [
+				currNode := (currNode right).
+			].
+		].
+		stdout << (currNode char).
+		currNode := root2.
+	].
+] ifFalse: [
 
 "Frequency table array obj"
 
@@ -222,13 +290,13 @@ encodedArray := Array new: 257.
 		]
 	]
 ].
-
+].
 "if option t, print encoding table sorted by character to output file if exists or stdout"
 (option = '-t') ifTrue: [
-	1 to: 256 do: [:i |
+	1 to: 257 do: [:i |
 		(freqtable at: i) notNil ifTrue: [	
 			(outfileExists) ifTrue: [
-				(i < 33) ifTrue: [
+				(i < 32) ifTrue: [
 					|hex|
 					outfile nextPut: $x.
 					hex := i radix: 16.
@@ -239,10 +307,8 @@ encodedArray := Array new: 257.
 						outfile nextPut: (hex at: j).
 					].
 				] ifFalse: [
-					outfile nextPut: $ .
-					(i = 257 asCharacter) ifTrue: [outfile nextPut: ('EOF')]
-					ifFalse:[outfile nextPut: (i asCharacter).].	
-					outfile nextPut: $ .
+					(i = 257) ifTrue: [outfile nextPut: $E. outfile nextPut: $O. outfile nextPut: $F.]
+					ifFalse:[ outfile nextPut: $ . outfile nextPut: (i asCharacter). outfile nextPut: $ .].	
 				].
 				
 				1 to: (5 - (((freqtable at: i) asString) size)) do: [:variable |
@@ -273,9 +339,11 @@ encodedArray := Array new: 257.
 						stdout << (hex at: j).
 					].
 				] ifFalse: [
-					stdout << ' ' .
-					stdout << (i asCharacter).	
-					stdout << ' ' .
+					(i = 257) ifTrue: [
+						stdout << 'EOF'.
+					] ifFalse: [	
+						stdout << ' '<<(i asCharacter) << ' '.
+					].	
 				].
 				
 				1 to: (5 - (((freqtable at: i) asString) size)) do: [:variable |
@@ -299,11 +367,15 @@ encodedArray := Array new: 257.
 		].
 	].
 ] ifFalse: [
-	(outfileExists) ifTrue: [
-		root postorder: [] file: outfile.
-	] ifFalse: [
-		root postorder: [].
-	]
+	(option = '-u') ifFalse: [
+		(outfileExists) ifTrue: [
+			root postorder: [] file: outfile.
+			outfile nextPut: $1.
+		] ifFalse: [
+			root postorder: [].
+			stdout << '1'.
+		].
+	].
 ].
 infile close.
 
@@ -366,5 +438,5 @@ infile close.
 	"continue until reaching last bit/stack is empty"
 	"loop over rest of input file to reconstruct"
 	"read bit until reaching leaf, write out corresponding byte & reset pointer back to root"
-(option = '-d') ifTrue: [
-	].	
+(option = 'd') ifTrue: [
+].
