@@ -188,9 +188,10 @@ infile := openfile value: infilename value: FileStream read.
 
 
 (option = '-u') ifTrue: [
-	|endOfHuffman stack bit byte nextBit aLeaf root2 leftTree rightTree newTree|
+	|atEOF endOfHuffman stack bit byte nextBit aLeaf root2 leftTree rightTree newTree|
 	stack := OrderedCollection new.
 	endOfHuffman := false.
+	atEOF := false.
 	[endOfHuffman] whileFalse: [
 		bit := infile next.
 		byte := 16r00.
@@ -200,7 +201,6 @@ infile := openfile value: infilename value: FileStream read.
 				nextBit := nextBit bitShift: (7-i).
 				byte := byte bitOr: nextBit.
 				].
-			stdout << 'byte is: ' << byte << nl.
 			(byte = 0) ifTrue: [
 				| extraBit|
 				extraBit := infile next.
@@ -223,18 +223,28 @@ infile := openfile value: infilename value: FileStream read.
 			
 		].	
 	].
-	[infile atEnd] whileFalse: [
+	[atEOF] whileFalse: [
 		| currNode bit |
 		currNode := root2.
 		[(currNode isMemberOf: Leaf)] whileFalse: [
 			bit := infile next.
+		"	stdout << 'bit is' << bit."
 			(bit = $0) ifTrue: [
 				currNode := (currNode left).
 			] ifFalse: [
 				currNode := (currNode right).
 			].
 		].
-		stdout << (currNode char).
+		"stdout << (currNode isMemberOf: Leaf) << nl."
+		((currNode char) = (256 asCharacter)) ifTrue: [
+			atEOF := true.
+		] ifFalse: [
+			(outfileExists) ifTrue: [
+				outfile nextPut: (currNode char).
+			] ifFalse: [
+				stdout << (currNode char).
+			].
+		].
 		currNode := root2.
 	].
 ] ifFalse: [
@@ -242,54 +252,41 @@ infile := openfile value: infilename value: FileStream read.
 "Frequency table array obj"
 
 "Create 1 tree for each ASCII char (256)"
-
-freqtable at: 257 put: 1.
-
-[infile atEnd] whileFalse:[
-    	| inputChar ind |
-	ind := infile nextByte.
-	(freqtable at: ind) isNil 
-	    ifTrue: [freqtable at: ind put: 0].
-	freqtable at: ind put: (freqtable at: ind) + 1.
-].
-
-"Read in file and save frequency in new frequency table (initialize w/ ASCII)"
-
-
-"Create priority queue and load from frequency table, if count > 0"
-priorQ := SortedCollection new.
-
-"|i|
-i := 0."
-1 to: 257 do: [:i |
-	((freqtable at: i) notNil) ifTrue:[
-		"stdout << 'freqtable at i:' << (freqtable at: i) << nl."
-		char := i asCharacter.
-		priorQ add: (Leaf new: char count: (freqtable at: i)). 
+	freqtable at: 257 put: 1.
+	[infile atEnd] whileFalse:[
+    		| inputChar ind |
+		ind := infile nextByte.
+		((freqtable at: ind) isNil) ifTrue: [freqtable at: ind put: 0].
+		freqtable at: ind put: (freqtable at: ind) + 1.
 	].
-].
 
-"Huffman tree- result is tree in T3" 
-[priorQ size == 1] whileFalse:[
-	| T1 T2 T3 |
-	T1 := priorQ removeFirst.
-	T2 := priorQ removeFirst.
-	T3 := (Tree new: T1 char count: (T1 count + T2 count) left: T1 right: T2).
-	priorQ add: T3.  
-].
+	"Read in file and save frequency in new frequency table (initialize w/ ASCII)"
+	"Create priority queue and load from frequency table, if count > 0"
+	priorQ := SortedCollection new.
+	1 to: 257 do: [:i |
+		((freqtable at: i) notNil) ifTrue:[
+			"stdout << 'freqtable at i:' << (freqtable at: i) << nl."
+			char := i asCharacter.
+			priorQ add: (Leaf new: char count: (freqtable at: i)). 
+		].
+	].
 
-root := priorQ removeFirst.
+	"Huffman tree- result is tree in T3" 
+	[priorQ size == 1] whileFalse:[
+		| T1 T2 T3 |
+		T1 := priorQ removeFirst.
+		T2 := priorQ removeFirst.
+		T3 := (Tree new: T1 char count: (T1 count + T2 count) left: T1 right: T2).
+		priorQ add: T3.  
+	].
 
-"Encoding of each char using DFS, bit string (left is 0, right is 1)"
-encodedArray := Array new: 257.
-(root = nil) ifFalse: [
-	root inorder: [:char :bitstring| encodedArray at: (char asInteger) put: bitstring] prefix: ''.
-	"1 to: 257 do: [:i |
-        	((freqtable at: i) notNil) ifTrue:[ 
-			stdout << 'encodedArray at' << (i asCharacter) << ':' << (encodedArray at: i) << nl.
-		]
-	]"
-].
+	root := priorQ removeFirst.
+
+	"Encoding of each char using DFS, bit string (left is 0, right is 1)"
+	encodedArray := Array new: 257.
+	(root = nil) ifFalse: [
+		root inorder: [:char :bitstring| encodedArray at: (char asInteger) put: bitstring] prefix: ''.
+	].
 ].
 "if option t, print encoding table sorted by character to output file if exists or stdout"
 (option = '-t') ifTrue: [
@@ -384,46 +381,51 @@ infile := openfile value: infilename value: FileStream read.
 
 "compress input file (write out encoded version of each byte) -> output file"
 (option = '-c') ifTrue: [
+	| bitCount |
+	bitCount := 0.
 	(outfileExists) ifTrue: [
 		[infile atEnd] whileFalse:[
-        		| ind numZeros |
+        		| ind |
         		ind := infile nextByte.
-			numZeros := (8 - ((encodedArray at:ind) size)).
-			1 to: numZeros do:[:i| outfile nextPut:$0.].	
 			1 to: ((encodedArray at: ind) size) do: [:j |
-                                       |charr|
-                                       charr := ((encodedArray at: ind) at: j).
-                                       outfile nextPut: charr.
-                               ].
+                               |charr|
+                               charr := ((encodedArray at: ind) at: j).
+         	               outfile nextPut: charr.
+				bitCount := (bitCount + 1). 
+                        ].
 		].
-		
-                1 to: (8 - ((encodedArray at:257) size)) do:[:i| outfile nextPut: $0.].
 		1 to: ((encodedArray at: 257) size) do: [:j |
                              |charr|
                              charr := ((encodedArray at: 257) at: j).
                              outfile nextPut: charr.
+				bitCount := (bitCount + 1).
                 ].
-
+		[(bitCount \\ 8) = 0] whileFalse: [
+			outfile nextPut: $0.
+			bitCount := (bitCount + 1).
+		].
+		
 	]ifFalse:[
 		[infile atEnd] whileFalse:[
-                        | ind numZeros |
+                        | ind |
                         ind := infile nextByte.
-                        numZeros := (8 - ((encodedArray at:ind) size)).
-                        1 to: numZeros do:[:i| stdout << '0'.].
                         1 to: ((encodedArray at: ind) size) do: [:j |
                                        |charr|
                                        charr := ((encodedArray at: ind) at: j).
                                        stdout<< charr.
+					bitCount := (bitCount + 1).
                                ].
                 ].
-			
-                1 to:(8 - ((encodedArray at:257) size))do:[:i| stdout << '0'.].
-
 		1 to: ((encodedArray at: 257) size) do: [:j |
                              |charr|
                              charr := ((encodedArray at: 257) at: j).
                              stdout<< charr.
-                ].
+                		bitCount := (bitCount + 1).
+		].
+		[(bitCount \\ 8) = 0] whileFalse: [
+			stdout << '0'.
+			bitCount := (bitCount + 1).
+		].
 	].
 ].
 
