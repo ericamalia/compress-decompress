@@ -263,7 +263,7 @@ priorQ := SortedCollection new.
 i := 0."
 1 to: 257 do: [:i |
 	((freqtable at: i) notNil) ifTrue:[
-		stdout << 'freqtable at i:' << (freqtable at: i) << nl.
+		"stdout << 'freqtable at i:' << (freqtable at: i) << nl."
 		char := i asCharacter.
 		priorQ add: (Leaf new: char count: (freqtable at: i)). 
 	].
@@ -284,11 +284,11 @@ root := priorQ removeFirst.
 encodedArray := Array new: 257.
 (root = nil) ifFalse: [
 	root inorder: [:char :bitstring| encodedArray at: (char asInteger) put: bitstring] prefix: ''.
-	1 to: 257 do: [:i |
+	"1 to: 257 do: [:i |
         	((freqtable at: i) notNil) ifTrue:[ 
 			stdout << 'encodedArray at' << (i asCharacter) << ':' << (encodedArray at: i) << nl.
 		]
-	]
+	]"
 ].
 ].
 "if option t, print encoding table sorted by character to output file if exists or stdout"
@@ -430,13 +430,3 @@ infile := openfile value: infilename value: FileStream read.
 infile close. 
 (outfileExists) ifTrue: [outfile close].
 
-"decompress input file -> output"
-	"reconstruct huffman decoding tree, read 1 bit"
-	"if 0, read next 8 bits and reconstruct val, check for EOF, push byte onto stack"
-	"if 1, pop the 1 subtree from stack, then pop 0 subtree form stack, 
-	push new tree of both of these children"
-	"continue until reaching last bit/stack is empty"
-	"loop over rest of input file to reconstruct"
-	"read bit until reaching leaf, write out corresponding byte & reset pointer back to root"
-(option = 'd') ifTrue: [
-].
