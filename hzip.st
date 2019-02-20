@@ -269,8 +269,7 @@ infile := openfile value: infilename value: FileStream read.
 	priorQ := SortedCollection new.
 	1 to: 257 do: [:i |
 		((freqtable at: i) notNil) ifTrue:[
-			char := (i-1) asCharacter.
-			stdout << 'char is:' << char << nl.
+			char := i asCharacter.
 			priorQ add: (Leaf new: char count: (freqtable at: i)). 
 		].
 	].
@@ -289,7 +288,7 @@ infile := openfile value: infilename value: FileStream read.
 	"Encoding of each char using DFS, bit string (left is 0, right is 1)"
 	encodedArray := Array new: 257.
 	(root = nil) ifFalse: [
-		root inorder: [:char :bitstring| encodedArray at: ((char asInteger)+1) put: bitstring] prefix: ''.
+		root inorder: [:char :bitstring| encodedArray at: (char asInteger) put: bitstring] prefix: ''.
 	].
 ].
 "if option t, print encoding table sorted by character to output file if exists or stdout"
