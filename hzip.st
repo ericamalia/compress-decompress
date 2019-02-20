@@ -217,7 +217,9 @@ infile := openfile value: infilename value: FileStream read.
 				newTree := Tree new: (leftTree char) count: 1 left: leftTree right: rightTree.
 				stack add: newTree. 
 			] ifTrue: [
-				root2 := newTree.
+				(newTree isNil) ifTrue: 
+					[root2 := stack removeLast.]
+				ifFalse:[root2 := newTree.].
 				endOfHuffman := true.
 			].
 			
@@ -241,6 +243,7 @@ infile := openfile value: infilename value: FileStream read.
 		] ifFalse: [
 			(outfileExists) ifTrue: [
 				outfile nextPut: (currNode char).
+			
 			] ifFalse: [
 				stdout << (currNode char).
 			].
@@ -255,7 +258,7 @@ infile := openfile value: infilename value: FileStream read.
 	freqtable at: 257 put: 1.
 	[infile atEnd] whileFalse:[
     		| inputChar ind |
-		ind := infile nextByte.
+		ind := ((infile nextByte) + 1).
 		((freqtable at: ind) isNil) ifTrue: [freqtable at: ind put: 0].
 		freqtable at: ind put: (freqtable at: ind) + 1.
 	].
@@ -293,10 +296,10 @@ infile := openfile value: infilename value: FileStream read.
 	1 to: 257 do: [:i |
 		(freqtable at: i) notNil ifTrue: [	
 			(outfileExists) ifTrue: [
-				(i < 32) ifTrue: [
+				((i < 33) | ((i > 127) & (i < 257)))ifTrue: [
 					|hex|
 					outfile nextPut: $x.
-					hex := i radix: 16.
+					hex := (i-1) radix: 16.
 					(hex size < 5) ifTrue: [
 						outfile nextPut: $0.
 					].
@@ -305,7 +308,7 @@ infile := openfile value: infilename value: FileStream read.
 					].
 				] ifFalse: [
 					(i = 257) ifTrue: [outfile nextPut: $E. outfile nextPut: $O. outfile nextPut: $F.]
-					ifFalse:[ outfile nextPut: $ . outfile nextPut: (i asCharacter). outfile nextPut: $ .].	
+					ifFalse:[ outfile nextPut: $ . outfile nextPut: ((i-1) asCharacter). outfile nextPut: $ .].	
 				].
 				
 				1 to: (5 - (((freqtable at: i) asString) size)) do: [:variable |
@@ -325,22 +328,24 @@ infile := openfile value: infilename value: FileStream read.
 
 				outfile nextPut: nl.
 			] ifFalse: [	
-				(i < 33) ifTrue: [
+				((i < 33) | ((i > 127) & (i < 257))) ifTrue: [
 					|hex|
 					stdout << 'x'.
-					hex := i radix: 16.
+					hex := (i-1) radix: 16.
 					(hex size < 5) ifTrue: [
 						stdout << '0'.
 					].
 					4 to: hex size do: [:j |
 						stdout << (hex at: j).
 					].
+					"stdout << i."
 				] ifFalse: [
 					(i = 257) ifTrue: [
 						stdout << 'EOF'.
 					] ifFalse: [	
-						stdout << ' '<<(i asCharacter) << ' '.
-					].	
+						stdout << ' '<<((i-1) asCharacter) << ' '.
+					].
+					"stdout << i."	
 				].
 				
 				1 to: (5 - (((freqtable at: i) asString) size)) do: [:variable |
@@ -386,7 +391,7 @@ infile := openfile value: infilename value: FileStream read.
 	(outfileExists) ifTrue: [
 		[infile atEnd] whileFalse:[
         		| ind |
-        		ind := infile nextByte.
+        		ind := ((infile nextByte) + 1).
 			1 to: ((encodedArray at: ind) size) do: [:j |
                                |charr|
                                charr := ((encodedArray at: ind) at: j).
@@ -408,7 +413,7 @@ infile := openfile value: infilename value: FileStream read.
 	]ifFalse:[
 		[infile atEnd] whileFalse:[
                         | ind |
-                        ind := infile nextByte.
+                        ind := ((infile nextByte) + 1).
                         1 to: ((encodedArray at: ind) size) do: [:j |
                                        |charr|
                                        charr := ((encodedArray at: ind) at: j).

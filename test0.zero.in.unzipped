@@ -1,5 +1,8 @@
-freqtable at i:9
-freqtable at i:1
-encodedArray at0:1
-encodedArray at<16r0101>:0
-0<16r0101>001
+Object: nil error: did not understand #right
+MessageNotUnderstood(Exception)>>signal (ExcHandling.st:254)
+UndefinedObject(Object)>>doesNotUnderstand: #right (SysExcept.st:1448)
+optimized [] in UndefinedObject>>executeStatements (hzip.st:235)
+BlockClosure>>whileFalse: (BlkClosure.st:339)
+optimized [] in UndefinedObject>>executeStatements (hzip.st:218)
+True>>ifTrue:ifFalse: (True.st:50)
+UndefinedObject>>executeStatements (hzip.st:190)
