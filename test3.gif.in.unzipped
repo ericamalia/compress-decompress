@@ -1,7 +1,7 @@
-Object: OrderedCollection new: 16 "<0x7f80cdbcfc10>" error: Invalid value OrderedCollection (): the collection is empty
+Object: OrderedCollection new: 16 "<0x7f80cdbcfc00>" error: Invalid value OrderedCollection (): the collection is empty
 SystemExceptions.EmptyCollection(Exception)>>signal (ExcHandling.st:254)
 SystemExceptions.EmptyCollection class(SystemExceptions.InvalidValue class)>>signalOn: (SysExcept.st:411)
 OrderedCollection>>removeLast (OrderColl.st:315)
-optimized [] in UndefinedObject>>executeStatements (hzip.st:217)
+optimized [] in UndefinedObject>>executeStatements (hzip.st:203)
 True>>ifTrue:ifFalse: (True.st:50)
-UndefinedObject>>executeStatements (hzip.st:192)
+UndefinedObject>>executeStatements (hzip.st:177)
