@@ -69,15 +69,14 @@ Object subclass: Leaf [
 		].
 		stdout << '1'.
 	] ifFalse: [
-	
-
 		ascii := ((char asciiValue) radix: 2).
 		1 to: (10 - (ascii size)) do: [:i |
 			stdout << '0'.
 		].
-		3 to: (ascii size) do:[:i|
+		"3 to: (ascii size) do:[:i|
 			stdout << (ascii at: i).
-		].	
+		]."
+		stdout << char. 
 		"print char in bits"
 		].
    ]
@@ -220,7 +219,9 @@ infile := openfile value: infilename value: FileStream read.
 				newTree := Tree new: (leftTree char) count: 1 left: leftTree right: rightTree.
 				stack add: newTree. 
 			] ifTrue: [
-				root2 := newTree.
+				(newTree isNil) ifTrue: 
+					[root2 := stack removeLast.]
+				ifFalse:[root2 := newTree.].
 				endOfHuffman := true.
 			].
 			
@@ -268,8 +269,8 @@ infile := openfile value: infilename value: FileStream read.
 	priorQ := SortedCollection new.
 	1 to: 257 do: [:i |
 		((freqtable at: i) notNil) ifTrue:[
-			"stdout << 'freqtable at i:' << (freqtable at: i) << nl."
-			char := i asCharacter.
+			char := (i-1) asCharacter.
+			stdout << 'char is:' << char << nl.
 			priorQ add: (Leaf new: char count: (freqtable at: i)). 
 		].
 	].
@@ -288,7 +289,7 @@ infile := openfile value: infilename value: FileStream read.
 	"Encoding of each char using DFS, bit string (left is 0, right is 1)"
 	encodedArray := Array new: 257.
 	(root = nil) ifFalse: [
-		root inorder: [:char :bitstring| encodedArray at: (char asInteger) put: bitstring] prefix: ''.
+		root inorder: [:char :bitstring| encodedArray at: ((char asInteger)+1) put: bitstring] prefix: ''.
 	].
 ].
 "if option t, print encoding table sorted by character to output file if exists or stdout"
@@ -320,9 +321,9 @@ infile := openfile value: infilename value: FileStream read.
 				outfile nextPut: $ .
 				
 
-				1 to: ((encodedArray at: i) size) do: [:j |
+				1 to: ((encodedArray at: (i-1)) size) do: [:j |
 					|charr|
-					charr := ((encodedArray at: i) at: j).
+					charr := ((encodedArray at: (i-1)) at: j).
 					outfile nextPut: charr.
 				].
 
@@ -416,14 +417,14 @@ infile := openfile value: infilename value: FileStream read.
                                        |charr|
                                        charr := ((encodedArray at: ind) at: j).
                                        stdout<< charr.
-					bitCount := (bitCount + 1).
+				       bitCount := (bitCount + 1).
                                ].
                 ].
 		1 to: ((encodedArray at: 257) size) do: [:j |
                              |charr|
                              charr := ((encodedArray at: 257) at: j).
                              stdout<< charr.
-                		bitCount := (bitCount + 1).
+                	     bitCount := (bitCount + 1).
 		].
 		[(bitCount \\ 8) = 0] whileFalse: [
 			stdout << '0'.
