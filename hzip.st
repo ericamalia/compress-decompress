@@ -1,6 +1,7 @@
 #!/afs/cats.ucsc.edu/courses/cmps112-wm/usr/smalltalk/bin/gst -f
 
 nl := Character nl.
+quit := [:status| ObjectMemory quit: status ].
 outfileExists := false.
 Character extend [
    isPrint [
@@ -161,14 +162,12 @@ Leaf subclass: Tree [
 	]
 ]
 
-quit := [:status| ObjectMemory quit: status ].
-
 openfile := [:filename :mode |
     |file|
     [
         file := FileStream open: filename mode: mode
     ] on: SystemExceptions.FileError do: [signal|
-        stderr << 'error'
+        stderr << 'Cannot open file: '<< file << nl.
         quit value: 1.
     ].
     file.
@@ -178,6 +177,10 @@ freqtable := Array new: 257.
 
 "get infile and optional outfile"
 option := Smalltalk arguments at: 1.
+((option = '-t') |( option = '-d') |(option = '-c')|(option = '-u')) ifFalse: [
+	stderr << 'invalid option at argument 1' << nl.
+	quit value: 1.	
+].
 infilename := Smalltalk arguments at: 2.
 (Smalltalk arguments size < 3) ifFalse: [
 	outfilename := Smalltalk arguments at: 3.
@@ -217,9 +220,7 @@ infile := openfile value: infilename value: FileStream read.
 				newTree := Tree new: (leftTree char) count: 1 left: leftTree right: rightTree.
 				stack add: newTree. 
 			] ifTrue: [
-				(newTree isNil) ifTrue: 
-					[root2 := stack removeLast.]
-				ifFalse:[root2 := newTree.].
+				root2 := newTree.
 				endOfHuffman := true.
 			].
 			
@@ -243,7 +244,6 @@ infile := openfile value: infilename value: FileStream read.
 		] ifFalse: [
 			(outfileExists) ifTrue: [
 				outfile nextPut: (currNode char).
-			
 			] ifFalse: [
 				stdout << (currNode char).
 			].
@@ -258,7 +258,7 @@ infile := openfile value: infilename value: FileStream read.
 	freqtable at: 257 put: 1.
 	[infile atEnd] whileFalse:[
     		| inputChar ind |
-		ind := ((infile nextByte) + 1).
+		ind := infile nextByte.
 		((freqtable at: ind) isNil) ifTrue: [freqtable at: ind put: 0].
 		freqtable at: ind put: (freqtable at: ind) + 1.
 	].
@@ -296,10 +296,10 @@ infile := openfile value: infilename value: FileStream read.
 	1 to: 257 do: [:i |
 		(freqtable at: i) notNil ifTrue: [	
 			(outfileExists) ifTrue: [
-				((i < 33) | ((i > 127) & (i < 257)))ifTrue: [
+				(i < 32) ifTrue: [
 					|hex|
 					outfile nextPut: $x.
-					hex := (i-1) radix: 16.
+					hex := i radix: 16.
 					(hex size < 5) ifTrue: [
 						outfile nextPut: $0.
 					].
@@ -308,7 +308,7 @@ infile := openfile value: infilename value: FileStream read.
 					].
 				] ifFalse: [
 					(i = 257) ifTrue: [outfile nextPut: $E. outfile nextPut: $O. outfile nextPut: $F.]
-					ifFalse:[ outfile nextPut: $ . outfile nextPut: ((i-1) asCharacter). outfile nextPut: $ .].	
+					ifFalse:[ outfile nextPut: $ . outfile nextPut: (i asCharacter). outfile nextPut: $ .].	
 				].
 				
 				1 to: (5 - (((freqtable at: i) asString) size)) do: [:variable |
@@ -328,24 +328,22 @@ infile := openfile value: infilename value: FileStream read.
 
 				outfile nextPut: nl.
 			] ifFalse: [	
-				((i < 33) | ((i > 127) & (i < 257))) ifTrue: [
+				(i < 33) ifTrue: [
 					|hex|
 					stdout << 'x'.
-					hex := (i-1) radix: 16.
+					hex := i radix: 16.
 					(hex size < 5) ifTrue: [
 						stdout << '0'.
 					].
 					4 to: hex size do: [:j |
 						stdout << (hex at: j).
 					].
-					"stdout << i."
 				] ifFalse: [
 					(i = 257) ifTrue: [
 						stdout << 'EOF'.
 					] ifFalse: [	
-						stdout << ' '<<((i-1) asCharacter) << ' '.
-					].
-					"stdout << i."	
+						stdout << ' '<<(i asCharacter) << ' '.
+					].	
 				].
 				
 				1 to: (5 - (((freqtable at: i) asString) size)) do: [:variable |
@@ -391,7 +389,7 @@ infile := openfile value: infilename value: FileStream read.
 	(outfileExists) ifTrue: [
 		[infile atEnd] whileFalse:[
         		| ind |
-        		ind := ((infile nextByte) + 1).
+        		ind := infile nextByte.
 			1 to: ((encodedArray at: ind) size) do: [:j |
                                |charr|
                                charr := ((encodedArray at: ind) at: j).
@@ -413,7 +411,7 @@ infile := openfile value: infilename value: FileStream read.
 	]ifFalse:[
 		[infile atEnd] whileFalse:[
                         | ind |
-                        ind := ((infile nextByte) + 1).
+                        ind := infile nextByte.
                         1 to: ((encodedArray at: ind) size) do: [:j |
                                        |charr|
                                        charr := ((encodedArray at: ind) at: j).
