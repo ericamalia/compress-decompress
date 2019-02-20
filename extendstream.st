@@ -32,4 +32,3 @@ count := 0.
 ]
 
 "TEST: echo Hello World | extendstream.st"
-
